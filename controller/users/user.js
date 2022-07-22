@@ -5,8 +5,9 @@ exports.register = async (req, res) => {
   const { username, password, email } = req.body;
   try {
     // to make sure no one data similiar
-    let findUser = await User.findOne({ username: username, email: email });
-    if (findUser) {
+    let findUsername = await User.findOne({ username });
+    let findEmail = await User.findOne({ email });
+    if (findUsername || findEmail) {
       res.status(400).send({
         message: `Sorry the email or username has choosen, please choose the other one`,
         statusCode: 400,
@@ -15,21 +16,26 @@ exports.register = async (req, res) => {
       const userCreate = await User.create({ username, password, email });
       console.log(userCreate);
       // create data profile database with (foreign-key)
-      const { user_id, first_name, last_name, full_name, umur, tanggal_lahir, gender, address } = req.body;
-      const createProfile = await Profile.create({ user_id: userCreate.id, first_name, last_name, full_name, umur, tanggal_lahir, gender, address });
+      let { first_name, last_name, full_name, umur, tanggal_lahir, gender, address } = req.body;
+      let user_id = userCreate.id;
+      const createProfile = await Profile.create({ user_id, first_name, last_name, full_name, umur, tanggal_lahir, gender, address });
       console.log(createProfile);
-
-      if (!username || !password || !email || !first_name || !last_name || !full_name || !umur || !tanggal_lahir || !gender || !address) {
-        res.status(400).send({
-          message: `Failed to Create Your Data`,
-          statusCode: 400,
-        });
-      } else {
-        res.send({
-          message: `Successfull to Create Your Data`,
-          resultData: createProfile,
-          statusCode: 200,
-        });
+      for (var key in req.body) {
+        if (req.body[key] == "") {
+          res.status(400).send({
+            message: `Failed to Create Your Data`,
+            statusCode: 400,
+          });
+          return;
+        }
+        if (req.body[key]) {
+          res.send({
+            message: `Successfull to Create Your Data`,
+            resultData: createProfile,
+            statusCode: 200,
+          });
+          return;
+        }
       }
     }
     // create data profile database with (foreign-key) end tags.
